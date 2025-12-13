@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Cause:wght@100..900&display=swap');
+@import "tailwindcss";
+
+.cause,#root {
+  font-family: "Cause", cursive;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+
+.bg-img {
+  background-image: url('/2.jpg');
+  background-size: cover;      /* Ảnh phủ đủ */
+  background-position: center; /* Căn giữa */
+  background-repeat: no-repeat;
+}
+
+
+
+.glass-border{
+    background : transparent;
+    border-radius: 10px;
+    border: 2px solid white;
+    backdrop-filter:blur(0.4rem);
+}
+
+.ant-divider {
+    border-color: white !important;
+    border-width: 2px !important;
+}
+
+.ant-divider-dashed {
+    border-color: white !important;
+    border-width: 0 !important;
+    border-top-width: 2px !important;
+    border-style: dashed !important;
+}
+
+.scrollbar-hide {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
