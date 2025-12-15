@@ -190,12 +190,10 @@
 }
 
 
-
-/* .anticon svg {
-  color: white;
-  filter: drop-shadow(0 0 1.2px black);
-} */
-
+.ant-btn-color-primary {
+    /* color: red !important; */
+    background: #d68a8a !important;
+}
 
 
 /* Responsive styles */

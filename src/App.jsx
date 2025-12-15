@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { DatePicker, Divider, message, Slider, Switch, Tooltip } from 'antd';
-import { ClockCircleFilled, ClockCircleOutlined, ClockCircleTwoTone, DashboardFilled, DashboardOutlined, DashboardTwoTone, DeleteFilled, DeleteOutlined, DeleteTwoTone, MinusCircleFilled, MinusCircleOutlined, MinusCircleTwoTone } from '@ant-design/icons';
+import { DatePicker, Divider, message, Popconfirm, Slider, Switch, Tooltip } from 'antd';
+import { ClockCircleFilled, ClockCircleOutlined, ClockCircleTwoTone, DashboardFilled, DashboardOutlined, DashboardTwoTone, DeleteFilled, DeleteOutlined, DeleteTwoTone, MinusCircleFilled, MinusCircleOutlined, MinusCircleTwoTone, QuestionCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
@@ -345,15 +345,23 @@ function App() {
                       )
                     }
                     <Tooltip title='Delete this one' >
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className=" px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer "
-
+                      <Popconfirm
+                        description="Are you SURE TO DELETE this task?"
+                        okText='Delete it'
+                        cancelText='No'
+                        onConfirm={() => deleteTask(task.id)}
+                        icon={<QuestionCircleOutlined style={{ color: '#d68a8a' }} />}
                       >
-                        <DeleteOutlined
-                          twoToneColor="#ff7ab8b3"
-                        />
-                      </button>
+                        <button
+
+                          className=" px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer "
+
+                        >
+                          <DeleteOutlined
+                            twoToneColor="#ff7ab8b3"
+                          />
+                        </button>
+                      </Popconfirm>
                     </Tooltip>
                   </div>
                   {/* Button div of the middle of setting block*/}
@@ -432,7 +440,9 @@ function App() {
             }
           }}
         >
-          Music section
+          <Tooltip title="Play some sóngs">
+            <span>Music section</span>
+          </Tooltip>
           {showMusicSetting && (
             <>
               <iframe
@@ -503,7 +513,7 @@ function App() {
         </div>
 
         {/* Clock At Left Conner */}
-        <Tooltip title="Time doesnt comeback but we can comeback to they:)">
+        <Tooltip title="Time doesnt comeback but we can comeback to them:)">
           <div
             className='absolute left-10 top-10 glass-border text-white p-4 hover:cursor-not-allowed select-none text-3xl max-[900px]:hidden'>
             <ClockCircleFilled
@@ -514,9 +524,15 @@ function App() {
 
 
         {/* Slider at the right conner */}
+
         <div className="absolute top-30 right-10 glass-border text-white  p-4 max-[900px]:hidden">
-          <span onClick={() => setShowOpacitySlider(true)} className={`${showOpacitySlider ? 'mr-4' : 'cursor-pointer'} `}>Glass opacity</span>
-          <span onClick={() => setShowOpacitySlider(false)} className={`${showOpacitySlider ? 'cursor-pointer' : 'hidden'}`} >X</span>
+          <Tooltip title="made something naked">
+            <span onClick={() => setShowOpacitySlider(true)} className={`${showOpacitySlider ? 'mr-4' : 'cursor-pointer'} `}>Glass opacity</span>
+          </Tooltip>
+          <Tooltip title="Close this section">
+            <span onClick={() => setShowOpacitySlider(false)} className={`${showOpacitySlider ? 'cursor-pointer' : 'hidden'}`} >X</span>
+          </Tooltip>
+
           {showOpacitySlider && (
             <>
               <div>
@@ -542,6 +558,7 @@ function App() {
             </>
           )}
         </div>
+
 
       </div >
     </>
