@@ -10,6 +10,7 @@ const musicPlaylist = {
   Youtube: {
     Noel: 'https://www.youtube.com/embed/M1WtAPZJSlY?si=BWOJYoUUWS9t6WOB',
     Windy: 'https://www.youtube.com/embed/ttEEpPrIzkU?si=vEJ31OUwSEPXrYxl',
+    LofiGirl: 'https://www.youtube.com/embed/jfKfPfyJRdk?si=CXMeMhRLkyVskqBi',
   },
   SoundCloud: {
     MTP: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/1925530323&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=false',
@@ -31,6 +32,8 @@ function App() {
   const [targetMissionId, setTargetMissionId] = useState('');
   const [hideMusicSection, setHideMusicSecion] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [showFilterButton, setShowFilterButton] = useState(false);
 
 
 
@@ -153,11 +156,29 @@ function App() {
 
   const toggleBg = useCallback(() => {
     const bgDiv = document.querySelector('.bg-img');
+    const overlay = document.querySelector('.bg-overlay');
     const bgImage = window.getComputedStyle(bgDiv).backgroundImage.match(/\d+/g);
     let number = Number.parseInt(bgImage[bgImage.length - 1]);
-    if (number == 3) number = 1;
+    if (number === 6) number = 1;
     else number += 1;
-    bgDiv.style.backgroundImage = `url('/${number}.jpg')`;
+
+    // Fade to black
+    overlay.style.opacity = '1';
+
+    // Preload ảnh mới trước
+    const img = new Image();
+    img.src = `/${number}.jpg`;
+
+    img.onload = () => {
+      // Đợi fade to black hoàn tất
+      setTimeout(() => {
+        bgDiv.style.backgroundImage = `url('/${number}.jpg')`;
+        // Đợi một chút để đảm bảo browser đã render xong
+        setTimeout(() => {
+          overlay.style.opacity = '0';
+        }, 50);
+      }, 600);
+    };
   }, [])
 
 
@@ -197,6 +218,16 @@ function App() {
     return [...tasks].sort((a, b) => b.id - a.id);
   }, [tasks]);
 
+  // Memoize filtered tasks based on filter state
+  const filteredTasks = useMemo(() => {
+    if (filter === 'done') {
+      return sortedTasks.filter(task => task.completed);
+    } else if (filter === 'todo') {
+      return sortedTasks.filter(task => !task.completed);
+    }
+    return sortedTasks; // 'all'
+  }, [sortedTasks, filter]);
+
   // Memoize completed count
   const completedCount = useMemo(() => {
     return tasks.filter(t => t.completed).length;
@@ -222,10 +253,13 @@ function App() {
         Change to PC or laptop for better experience
       </p>
 
-      <div className=" w-screen h-screen bg-img flex relative">
+      <div className=" w-screen h-screen bg-img flex relative animate-fade-in">
+        {/* Black overlay for smooth transition */}
+        <div className="bg-overlay absolute inset-0 bg-black pointer-events-none" style={{ opacity: 0, transition: 'opacity 0.6s ease-in-out' }}></div>
+
         {/* Mission block */}
-        <div className="glass-border w-[35vw] m-auto h-[90vh] flex flex-col p-8 max-[1350px]:w-[40vw]  max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:h-[85vh] max-[768px]:p-4">
-          <h1 className="text-center text-7xl mt-6 mb-8 text-white font-bold select-none max-[768px]:text-4xl max-[768px]:mt-3 max-[768px]:mb-4">Mission List</h1>
+        <div className="relative glass-border w-[35vw] m-auto h-[90vh] flex flex-col p-8 max-[1350px]:w-[40vw]  max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:h-[85vh] max-[768px]:p-4 animate-slide-up">
+          <h1 className="text-center text-7xl mt-6 mb-8 text-white font-bold select-none max-[768px]:text-4xl max-[768px]:mt-3 max-[768px]:mb-4 animate-bounce-in">Mission List</h1>
 
           {/* Input section */}
           <div className="flex gap-3 mb-6 max-[640px]:gap-2 max-[640px]:mb-4">
@@ -235,28 +269,31 @@ function App() {
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
               placeholder="Add new mission baby"
-              className="flex-1 min-w-0 px-4 py-3 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/70 focus:outline-none focus:border-white selection:bg-pink-500/50 max-[640px]:px-2 max-[640px]:py-2 max-[640px]:text-sm"
+              className="hover:scale-101 flex-1 min-w-0 px-4 py-3 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/70 focus:outline-none focus:border-white selection:bg-pink-500/50 max-[640px]:px-2 max-[640px]:py-2 max-[640px]:text-sm"
               maxLength={30}
             />
-            <div
-              onClick={addTask}
-              className="px-6 py-3 bg-white/30 hover:bg-white/40 text-white font-semibold rounded-lg border-2 border-white/50 transition-all cursor-pointer max-[640px]:px-4 max-[640px]:py-2 max-[640px]:text-sm"
-            >
-              Add
-            </div>
+            <Tooltip title={inputValue ? "U can do this ;)" : 'Add new one baby ;)'}>
+              <div
+                onClick={addTask}
+                className="hover:scale-110 px-6 py-3 bg-white/30 hover:bg-white/40 text-white font-semibold rounded-lg border-2 border-white/50 transition-all cursor-pointer max-[640px]:px-4 max-[640px]:py-2 max-[640px]:text-sm"
+              >
+                Add
+              </div>
+            </Tooltip>
           </div>
+
           <Divider
             dashed
             className="ant-divider"
           />
           {/* Task block */}
           <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide">
-            {sortedTasks.map(task => (
+            {filteredTasks.map(task => (
 
               // Task line
               <div
                 key={task.id}
-                className="flex items-center justify-between gap-3 p-4 bg-white/20 rounded-lg border-2 border-white/30 hover:bg-white/30 transition-all max-[640px]:p-2 max-[640px]:gap-2"
+                className="flex items-center justify-between gap-3 p-4 bg-white/20 rounded-lg border-2 border-white/30 hover:bg-white/30 transition-all max-[640px]:p-2 max-[640px]:gap-2 animate-fade-in-up"
               >
 
                 <div className='flex 2xl:ml-5 '>
@@ -316,7 +353,7 @@ function App() {
                           <button
                             onClick={() => removeCountDown(task.id)
                             }
-                            className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
+                            className="hover:scale-110 mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
 
                           >
                             <MinusCircleOutlined
@@ -334,7 +371,7 @@ function App() {
                               setTargetMissionId(task.id);
                               setShowTimePicker(!showTimePicker);
                             }}
-                            className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
+                            className="hover:scale-110 mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
 
                           >
                             <DashboardOutlined
@@ -354,7 +391,7 @@ function App() {
                       >
                         <button
 
-                          className=" px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer "
+                          className="hover:scale-110 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer "
 
                         >
                           <DeleteOutlined
@@ -412,26 +449,70 @@ function App() {
           </div>
           {/* Task block */}
 
+          {/* Filter buttons */}
+          <div className={`${showFilterButton ? '' : 'hidden'} flex gap-2 mt-4 mb-3 justify-center max-[640px]:gap-1`}>
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all max-[640px]:px-3 max-[640px]:py-1.5 max-[640px]:text-sm ${filter === 'all'
+                ? 'bg-pink-500/80 text-white border-2 border-white'
+                : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
+                }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter('todo')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all max-[640px]:px-3 max-[640px]:py-1.5 max-[640px]:text-sm ${filter === 'todo'
+                ? 'bg-pink-500/80 text-white border-2 border-white'
+                : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
+                }`}
+            >
+              Doing
+            </button>
+            <button
+              onClick={() => setFilter('done')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all max-[640px]:px-3 max-[640px]:py-1.5 max-[640px]:text-sm ${filter === 'done'
+                ? 'bg-pink-500/80 text-white border-2 border-white'
+                : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'
+                }`}
+            >
+              Done
+            </button>
+          </div>
+
           {/* Task counter */}
-          <div className="mt-4 text-center text-white/80">
+          <div className={`${showFilterButton ? 'hidden' : ''} mt-2 text-center text-white/80`}>
             {tasks.length} task{tasks.length > 1 ? 's' : ''} • {completedCount} completed
           </div>
           {/* Task counter */}
+
+          <div className='absolute left-2 bottom-2'>
+            <Switch
+              checked={showFilterButton}
+              size="small"
+              checkedChildren="filter on"
+              unCheckedChildren="filter off"
+              onChange={(e) => {
+                // toggleTextline(e);
+                setShowFilterButton(e)
+              }}
+            />
+          </div>
 
         </div>
         {/* Mission block */}
 
 
         <Tooltip title='Maybe flick because of high res image :D'>
-          <div className='absolute right-10 top-10 glass-border text-white p-4 hover:cursor-pointer select-none z-30 max-[900px]:hidden'
+          <div className='hover:scale-110 animate-slide-right ease-in duration-300 absolute right-10 top-10 glass-border text-white p-4 hover:cursor-pointer select-none z-30 max-[900px]:hidden'
             onClick={toggleBg}
 
           >
-            Change Background
+            <h1 className='animate-bounce-in '>Change Background</h1>
           </div>
         </Tooltip>
 
-        <div className={`  absolute right-10 bottom-10 max-[1280px]:static max-[1280px]:mx-auto max-[1280px]:mt-4 max-[1280px]:mb-6 max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:p-2 glass-border text-white p-4 select-none  ${showMusicSetting ? '' : 'cursor-pointer'} ${hideMusicSection ? 'cursor-pointer' : ''}`}
+        <div className={` animate-slide-up absolute right-10 bottom-10 max-[1280px]:static max-[1280px]:mx-auto max-[1280px]:mt-4 max-[1280px]:mb-6 max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:p-2 glass-border text-white p-4 select-none  ${showMusicSetting ? '' : 'cursor-pointer'} ${hideMusicSection ? 'cursor-pointer' : ''}`}
           onClick={() => {
             if (hideMusicSection === true) setHideMusicSecion(false)
             else {
@@ -440,8 +521,8 @@ function App() {
             }
           }}
         >
-          <Tooltip title="Play some sóngs">
-            <span>Music section</span>
+          <Tooltip title={(showMusicSetting) ? ((hideMusicSection) ? 'Click X to turn of music' : '') : "Play some sóngs"}>
+            <h1 className='animate-bounce-in'>Music section</h1>
           </Tooltip>
           {showMusicSetting && (
             <>
@@ -515,24 +596,27 @@ function App() {
         {/* Clock At Left Conner */}
         <Tooltip title="Time doesnt comeback but we can comeback to them:)">
           <div
-            className='absolute left-10 top-10 glass-border text-white p-4 hover:cursor-not-allowed select-none text-3xl max-[900px]:hidden'>
+            className='flex animate-slide-left absolute left-10 top-10 glass-border text-white p-4 hover:cursor-not-allowed select-none text-3xl max-[900px]:hidden '>
             <ClockCircleFilled
+              className='animate-bounce-in'
             />
-            {' ' + clock}
+            <h1 className='animate-bounce-in ml-2'>{clock}</h1>
           </div>
         </Tooltip>
 
 
         {/* Slider at the right conner */}
 
-        <div className="absolute top-30 right-10 glass-border text-white  p-4 max-[900px]:hidden">
-          <Tooltip title="made something naked">
-            <span onClick={() => setShowOpacitySlider(true)} className={`${showOpacitySlider ? 'mr-4' : 'cursor-pointer'} `}>Glass opacity</span>
-          </Tooltip>
-          <Tooltip title="Close this section">
-            <span onClick={() => setShowOpacitySlider(false)} className={`${showOpacitySlider ? 'cursor-pointer' : 'hidden'}`} >X</span>
-          </Tooltip>
+        <div className={` ${showOpacitySlider ? '' : 'hover:scale-110'} animate-slide-right absolute top-30 right-10 glass-border text-white  p-4 max-[900px]:hidden`}>
+          <div className='flex'>
+            <Tooltip title={showOpacitySlider ? '' : "made something naked"}>
+              <h1 onClick={() => setShowOpacitySlider(true)} className={`${showOpacitySlider ? 'mr-4' : 'cursor-pointer'} animate-bounce-in`}>Glass opacity</h1>
+            </Tooltip>
+            <Tooltip title="Close this section">
+              <span onClick={() => setShowOpacitySlider(false)} className={`${showOpacitySlider ? 'cursor-pointer' : 'hidden'}`} >X</span>
+            </Tooltip>
 
+          </div>
           {showOpacitySlider && (
             <>
               <div>
