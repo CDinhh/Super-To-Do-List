@@ -205,8 +205,17 @@ function App() {
   return (
     <>
       {contextHolder}
-      <div className=" w-screen h-screen bg-img flex relative">
+      <p className="
+        md:hidden
+        fixed bottom-0 left-0 w-full
+        bg-black/70 text-white text-center text-sm
+        py-2
+        z-50
+      ">
+        Change to PC or laptop for better experience
+      </p>
 
+      <div className=" w-screen h-screen bg-img flex relative">
         {/* Mission block */}
         <div className="glass-border w-[35vw] m-auto h-[90vh] flex flex-col p-8 max-[1350px]:w-[40vw]  max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:h-[85vh] max-[768px]:p-4">
           <h1 className="text-center text-7xl mt-6 mb-8 text-white font-bold select-none max-[768px]:text-4xl max-[768px]:mt-3 max-[768px]:mb-4">Mission List</h1>
