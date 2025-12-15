@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { DatePicker, Divider, message, Slider, Switch } from 'antd';
 import { ClockCircleOutlined, DashboardOutlined, DeleteOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -6,40 +6,214 @@ import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import todoSlice from './app/todoSlice';
 
+// Move static data outside component to prevent recreation on every render
+const musicPlaylist = {
+  Youtube: {
+    Noel: 'https://www.youtube.com/embed/M1WtAPZJSlY?si=BWOJYoUUWS9t6WOB',
+    Windy: 'https://www.youtube.com/embed/ttEEpPrIzkU?si=vEJ31OUwSEPXrYxl',
+  },
+  SoundCloud: {
+    MTP: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/1925530323&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=false',
+    MCK: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1660571346&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=false',
+    Obito: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A2009224335&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
+    Tlinh: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1685845422&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
+    Wrxdie: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1786869444&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
+    HTH: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1902528475&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
+  },
+};
+
+// Memoized TaskItem component to prevent unnecessary re-renders
+const TaskItem = memo(({
+  task,
+  toggleComplete,
+  deleteTask,
+  removeCountDown,
+  success,
+  showTimePicker,
+  targetMissionId,
+  setTargetMissionId,
+  setShowTimePicker,
+  updateCountDown,
+  disabledDate,
+  disabledTime
+}) => {
+  const handleToggleComplete = useCallback(() => {
+    if (!task.completed) {
+      success();
+      removeCountDown(task.id);
+    }
+    toggleComplete(task.id);
+  }, [task.completed, task.id, success, removeCountDown, toggleComplete]);
+
+  const handleDelete = useCallback(() => {
+    deleteTask(task.id);
+  }, [task.id, deleteTask]);
+
+  const handleRemoveCountDown = useCallback(() => {
+    removeCountDown(task.id);
+  }, [task.id, removeCountDown]);
+
+  const handleShowTimePicker = useCallback(() => {
+    setTargetMissionId(task.id);
+    setShowTimePicker(prev => !prev);
+  }, [task.id, setTargetMissionId, setShowTimePicker]);
+
+  const handleDateChange = useCallback((timeString) => {
+    updateCountDown(task.id, timeString.format('YYYY-MM-DD HH:mm:ss'));
+    setShowTimePicker(false);
+  }, [task.id, updateCountDown, setShowTimePicker]);
+
+  return (
+    <div
+      className="flex items-center justify-between gap-3 p-4 bg-white/20 rounded-lg border-2 border-white/30 hover:bg-white/30 transition-all max-[640px]:p-2 max-[640px]:gap-2"
+    >
+      <div className='flex 2xl:ml-5 '>
+        <div
+          onClick={handleToggleComplete}
+          className={` w-6 h-6 rounded-full border-2 border-white cursor-pointer flex items-center justify-center transition-all
+          ${task.completed ? 'bg-pink-500/70' : 'bg-white/20'}`}
+        >
+          {task.completed && <span className="text-white text-sm select-none">✓</span>}
+        </div>
+        <div className={` ml-2 2xl:ml-5 max-w-[20vw] max-[1690px]:w-[15vw] max-[768px]:max-w-[50vw] max-[640px]:max-w-[55vw] max-[640px]:text-sm wrap-break-word text-white text-lg selection:bg-pink-500/50 ${task.completed ? 'line-through opacity-60' : ''}`}>
+          {task.text}
+        </div>
+      </div>
+
+      <div className='flex flex-col text-end'>
+        {task.countDown && !task.completed && (() => {
+          const targetTime = dayjs(task.countDown);
+          const now = dayjs();
+          const remainSeconds = targetTime.diff(now, 'second');
+
+          if (remainSeconds < 0) {
+            removeCountDown(task.id);
+            return null;
+          }
+
+          const day = Math.floor(Math.floor(remainSeconds / 86400));
+          const hour = Math.floor((remainSeconds % 86400) / 3600);
+          const min = Math.floor((remainSeconds % 3600) / 60);
+          const sec = remainSeconds % 60;
+
+          return (
+            <span className="text-white/80 text-md mr-2 select-none">
+              {day === 0 ? '' : day + 'd '}
+              {hour === 0 ? '' : hour + 'h '}
+              {min === 0 ? '' : min + 'm '}
+              {sec + 's'}
+            </span>
+          )
+        })()}
+
+        <div >
+          {task.countDown && !task.completed && (
+            <button
+              onClick={handleRemoveCountDown}
+              className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
+              title='Remove count down'
+            >
+              <MinusCircleOutlined />
+            </button>
+          )}
+          {task.countDown == null && !task.completed && (
+            <button
+              onClick={handleShowTimePicker}
+              className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
+            >
+              <DashboardOutlined title='Count down this one' />
+            </button>
+          )}
+          <button
+            onClick={handleDelete}
+            className=" px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer "
+          >
+            <DeleteOutlined />
+          </button>
+        </div>
+
+        {showTimePicker && (targetMissionId === task.id) && (
+          <div className='mt-2'>
+            <DatePicker
+              open={showTimePicker}
+              showTime={{ format: "HH:mm ", showSecond: false }}
+              format="YYYY-MM-DD HH:mm"
+              disabledDate={disabledDate}
+              disabledTime={disabledTime}
+              onChange={handleDateChange}
+              renderExtraFooter={() => <div className='flex justify-around items-center h-10'>
+                <p>Choose your deadline cuhh</p>
+              </div>}
+              minuteStep={5}
+              changeOnScroll
+              showNow={false}
+              needConfirm={true}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+TaskItem.displayName = 'TaskItem';
 
 function App() {
-  const musicPlaylist = {
-    Youtube: {
-      Noel: 'https://www.youtube.com/embed/M1WtAPZJSlY?si=BWOJYoUUWS9t6WOB',
-      Windy: 'https://www.youtube.com/embed/ttEEpPrIzkU?si=vEJ31OUwSEPXrYxl',
-    },
-    SoundCloud: {
-      MTP: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/1925530323&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=false',
-      MCK: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1660571346&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=false',
-      Obito: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A2009224335&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
-      Tlinh: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1685845422&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
-      Wrxdie: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1786869444&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
-      HTH: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1902528475&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
-    },
 
-  }
-
-  const tasks = useSelector(state => state.todoList);
   const [inputValue, setInputValue] = useState('');
-  const [currentPlaylist, setCurrentPlaylist] = useState(musicPlaylist.Youtube.Noel);
   const [clock, setClock] = useState('')
   const [messageApi, contextHolder] = message.useMessage();
   const [showOpacitySlider, setShowOpacitySlider] = useState(false);
-  const [textLine, setTextLine] = useState(false);
-  const [opacityValue, setOpacityValue] = useState(50);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [showMusicSetting, setShowMusicSetting] = useState(false);
   const [targetMissionId, setTargetMissionId] = useState('');
 
+
+
+  const [currentPlatForm, setCurrentPlatForm] = useState(() => {
+    const value = JSON.parse(localStorage.getItem('current-platform'));
+    return value ? value : 'Youtube'
+  })
+
+  const [currentSong, setCurrentSong] = useState(() => {
+    const value = JSON.parse(localStorage.getItem('current-song'));
+    return value ? value : 'Noel'
+  })
+
+  const [currentPlaylist, setCurrentPlaylist] = useState(() => {
+    if (currentSong && currentPlatForm) {
+      return musicPlaylist[currentPlatForm][currentSong];
+    } else {
+      return musicPlaylist.Youtube.Noel;
+    }
+  });
+
+  const [showMusicSetting, setShowMusicSetting] = useState(() => {
+    const value = JSON.parse(localStorage.getItem('show-music-secsion'));
+    return value
+  });
+
+
+  const [textLine, setTextLine] = useState(() => {
+    const value = JSON.parse(localStorage.getItem('show-text-line'));
+    return value
+  });
+  const [opacityValue, setOpacityValue] = useState(() => {
+    const value = localStorage.getItem('opacity-value');
+    return value ? Number(value) : 50
+  });
+
+
+  const tasks = useSelector(state => state.todoList);
   const dispatch = useDispatch();
 
 
-  const addTask = () => {
+
+  useEffect(() => {
+    localStorage.setItem('CDMissionList', JSON.stringify(tasks));
+  }, [tasks])
+
+
+  const addTask = useCallback(() => {
     if (inputValue.trim() !== '') {
       dispatch(todoSlice.actions.addMission({
         id: Number.parseInt(Date.now()),
@@ -49,20 +223,21 @@ function App() {
       }))
       setInputValue('');
     }
-  }
+  }, [inputValue, dispatch])
 
-  const deleteTask = (id) => {
+  const deleteTask = useCallback((id) => {
     dispatch(todoSlice.actions.deleteMission(id));
-  }
+  }, [dispatch])
 
-  const toggleComplete = (id) => {
+  const toggleComplete = useCallback((id) => {
     dispatch(todoSlice.actions.toggleComplete(id));
-  }
+  }, [dispatch])
 
-  const updateCountDown = (id, time) => {
+  const updateCountDown = useCallback((id, time) => {
     dispatch(todoSlice.actions.updateCountDown({ id, time }));
-  }
-  const success = () => {
+  }, [dispatch])
+
+  const success = useCallback(() => {
     messageApi.open({
       content: 'Good Job Baby!',
       className: 'text-pink-500 font-bold',
@@ -71,14 +246,14 @@ function App() {
       },
       duration: 1,
     });
-  };
+  }, [messageApi]);
 
-  const removeCountDown = (id) => {
+  const removeCountDown = useCallback((id) => {
     dispatch(todoSlice.actions.removeCountDown(id));
-  }
+  }, [dispatch])
 
 
-  const disabledTime = () => {
+  const disabledTime = useCallback(() => {
     const now = dayjs();
     const currentHour = now.hour();
     const currentMinute = now.minute() + 1;
@@ -99,28 +274,22 @@ function App() {
         return Array.from({ length: 60 }, (_, i) => i).filter(s => s !== 0);
       },
     };
-  };
+  }, []);
 
-  const disabledDate = (current) => {
+  const disabledDate = useCallback((current) => {
     // Disable tất cả ngày trước hôm nay
     return current && current < dayjs().startOf('day');
-  };
+  }, []);
 
-  const toggleBg = () => {
+  const toggleBg = useCallback(() => {
     const bgDiv = document.querySelector('.bg-img');
     const bgImage = window.getComputedStyle(bgDiv).backgroundImage.match(/\d+/g);
     let number = Number.parseInt(bgImage[bgImage.length - 1]);
     if (number == 3) number = 1;
     else number += 1;
     bgDiv.style.backgroundImage = `url('/${number}.jpg')`;
-  }
+  }, [])
 
-  const toggleTextline = (value) => {
-    if (value === true)
-      document.documentElement.style.setProperty('--text-shadow1', '-1px -1px 0 #000,1px -1px 0 #000,-1px  1px 0 #000,1px  1px 0 #000');
-    else
-      document.documentElement.style.setProperty('--text-shadow1', '0');
-  }
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -140,6 +309,57 @@ function App() {
     document.documentElement.style.setProperty('--glass-blur', `${newValue}rem`);
   }, [opacityValue]);
 
+  useEffect(() => {
+    if (textLine)
+      document.documentElement.style.setProperty('--text-shadow1', '-1px -1px 0 #000,1px -1px 0 #000,-1px  1px 0 #000,1px  1px 0 #000');
+    else
+      document.documentElement.style.setProperty('--text-shadow1', '0');
+
+  }, [textLine])
+
+  useEffect(() => {
+    localStorage.setItem('current-platform', JSON.stringify(currentPlatForm));
+    localStorage.setItem('current-song', JSON.stringify(currentSong));
+  }, [currentPlatForm, currentPlaylist])
+
+  // Memoize sorted tasks to prevent re-sorting on every render
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => b.id - a.id);
+  }, [tasks]);
+
+  // Memoize completed count
+  const completedCount = useMemo(() => {
+    return tasks.filter(t => t.completed).length;
+  }, [tasks]);
+
+  // Memoized handlers for better performance
+  const handleInputChange = useCallback((e) => setInputValue(e.target.value), []);
+
+  const handleInputKeyPress = useCallback((e) => {
+    if (e.key === 'Enter') addTask();
+  }, [addTask]);
+
+  const handleMusicSettingShow = useCallback(() => {
+    setShowMusicSetting(true);
+    localStorage.setItem('show-music-secsion', JSON.stringify(true));
+  }, []);
+
+  const handleMusicSettingHide = useCallback((e) => {
+    e.stopPropagation();
+    setShowMusicSetting(false);
+    localStorage.setItem('show-music-secsion', JSON.stringify(false));
+  }, []);
+
+  const handleOpacityChange = useCallback((value) => {
+    setOpacityValue(value);
+    localStorage.setItem('opacity-value', JSON.stringify(value));
+  }, []);
+
+  const handleTextLineChange = useCallback((e) => {
+    setTextLine(e);
+    localStorage.setItem('show-text-line', JSON.stringify(e));
+  }, []);
+
   return (
     <>
       {contextHolder}
@@ -154,8 +374,8 @@ function App() {
             <input
               type="text"
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addTask()}
+              onChange={handleInputChange}
+              onKeyPress={handleInputKeyPress}
               placeholder="Add new mission baby"
               className="flex-1 min-w-0 px-4 py-3 rounded-lg bg-white/20 border-2 border-white/30 text-white placeholder-white/70 focus:outline-none focus:border-white selection:bg-pink-500/50 max-[640px]:px-2 max-[640px]:py-2 max-[640px]:text-sm"
               maxLength={30}
@@ -173,142 +393,29 @@ function App() {
           />
           {/* Task block */}
           <div className="flex-1 overflow-y-auto space-y-3 scrollbar-hide">
-            {[...tasks].sort((a, b) => b.id - a.id).map(task => (
-
-              // Task line
-              <div
+            {sortedTasks.map(task => (
+              <TaskItem
                 key={task.id}
-                className="flex items-center justify-between gap-3 p-4 bg-white/20 rounded-lg border-2 border-white/30 hover:bg-white/30 transition-all max-[640px]:p-2 max-[640px]:gap-2"
-              >
-
-                <div className='flex 2xl:ml-5 '>
-                  <div
-                    onClick={() => {
-                      if (!task.completed) {
-                        success();
-                        removeCountDown(task.id);
-                      }
-                      toggleComplete(task.id);
-                    }}
-                    className={` w-6 h-6 rounded-full border-2 border-white cursor-pointer flex items-center justify-center transition-all
-                    ${task.completed ? 'bg-pink-500/70' : 'bg-white/20'}`}
-                  >
-                    {task.completed && <span className="text-white text-sm select-none">✓</span>}
-                  </div>
-                  <div className={` ml-2 2xl:ml-5 max-w-[20vw] max-[1690px]:w-[15vw] max-[768px]:max-w-[50vw] max-[640px]:max-w-[55vw] max-[640px]:text-sm wrap-break-word text-white text-lg selection:bg-pink-500/50 ${task.completed ? 'line-through opacity-60' : ''}`}>
-                    {task.text}
-                  </div>
-                </div>
-
-
-
-                {/*  Setting block */}
-                <div className='flex flex-col text-end'>
-                  {task.countDown && !task.completed && (() => {
-                    // task.countDown format: "YYYY-MM-DD HH:mm:ss"
-                    const targetTime = dayjs(task.countDown);
-                    const now = dayjs();
-                    const remainSeconds = targetTime.diff(now, 'second');
-
-                    if (remainSeconds < 0) {
-                      removeCountDown(task.id);
-                      return null;
-                    }
-
-                    const day = Math.floor(Math.floor(remainSeconds / 86400));
-                    const hour = Math.floor((remainSeconds % 86400) / 3600);
-                    const min = Math.floor((remainSeconds % 3600) / 60);
-                    const sec = remainSeconds % 60;
-
-                    return (
-                      <span className="text-white/80 text-md mr-2 select-none">
-                        {day === 0 ? '' : day + 'd '}
-                        {hour === 0 ? '' : hour + 'h '}
-                        {min === 0 ? '' : min + 'm '}
-                        {sec + 's'}
-                      </span>
-                    )
-                  })()}
-
-                  {/* Button div of the middle of setting block: Delete deadline; Set deadline; Delete Task */}
-                  <div >
-                    {
-                      task.countDown && !task.completed && (
-                        <button
-                          onClick={() => removeCountDown(task.id)
-                          }
-                          className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
-                          title='Remove count down'
-                        >
-                          <MinusCircleOutlined />
-                        </button>
-                      )
-                    }
-                    {
-                      task.countDown == null && !task.completed && (
-                        <button
-                          onClick={() => {
-                            setTargetMissionId(task.id);
-                            setShowTimePicker(!showTimePicker);
-                          }}
-                          className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
-
-                        >
-                          <DashboardOutlined title='Count down this one' />
-                        </button>
-                      )
-                    }
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      className=" px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer "
-
-                    >
-                      <DeleteOutlined />
-                    </button>
-                  </div>
-                  {/* Button div of the middle of setting block*/}
-
-                  {/* Date Picker of the bottom of setting block*/}
-                  {showTimePicker && (targetMissionId === task.id) && (
-                    <div className='mt-2'>
-                      <DatePicker
-                        open={showTimePicker}
-                        showTime={{ format: "HH:mm ", showSecond: false }}
-                        format="YYYY-MM-DD HH:mm"
-                        disabledDate={disabledDate}
-                        disabledTime={disabledTime}
-                        onChange={(timeString) => {
-                          updateCountDown(task.id, timeString.format('YYYY-MM-DD HH:mm:ss'));
-                          setShowTimePicker(false);
-                        }}
-                        renderExtraFooter={() => <div className='flex justify-around items-center h-10'>
-                          <p>Choose your deadline cuhh</p>
-                        </div>
-                        }
-                        minuteStep={5}
-                        changeOnScroll
-                        showNow={false}
-                        needConfirm={true}
-
-                      />
-                    </div>
-                  )}
-                  {/* Date Picker of the bottom of setting block */}
-
-                </div>
-                {/*  Setting block */}
-
-
-              </div>
-              //  Task line
-
+                task={task}
+                toggleComplete={toggleComplete}
+                deleteTask={deleteTask}
+                removeCountDown={removeCountDown}
+                success={success}
+                showTimePicker={showTimePicker}
+                targetMissionId={targetMissionId}
+                setTargetMissionId={setTargetMissionId}
+                setShowTimePicker={setShowTimePicker}
+                updateCountDown={updateCountDown}
+                disabledDate={disabledDate}
+                disabledTime={disabledTime}
+              />
             ))}
           </div>
           {/* Task block */}
 
           {/* Task counter */}
           <div className="mt-4 text-center text-white/80">
-            {tasks.length} task{tasks.length > 1 ? 's' : ''} • {tasks.filter(t => t.completed).length} completed
+            {tasks.length} task{tasks.length > 1 ? 's' : ''} • {completedCount} completed
           </div>
           {/* Task counter */}
 
@@ -324,9 +431,9 @@ function App() {
         </div>
 
         <div className={`  absolute right-10 bottom-10 max-[1280px]:static max-[1280px]:mx-auto max-[1280px]:mt-4 max-[1280px]:mb-6 max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:p-2 glass-border text-white p-4 select-none  ${showMusicSetting ? '' : 'hover:cursor-pointer'}`}
-          onClick={() => { setShowMusicSetting(true) }}
+          onClick={handleMusicSettingShow}
         >
-          Give some songs
+          Music section
           {showMusicSetting && (
             <>
               <iframe
@@ -344,7 +451,10 @@ function App() {
                   const selectedOption = e.target.options[e.target.selectedIndex];
                   const platform = selectedOption.parentElement.label;
                   const song = selectedOption.value;
+                  setCurrentPlatForm(platform);
+                  setCurrentSong(song);
                   setCurrentPlaylist(musicPlaylist[platform][song]);
+
                 }}>
                   {Object.keys(musicPlaylist).map(platform => {
                     return <optgroup key={platform} label={platform} className='bg-[#e98080]'>
@@ -365,10 +475,7 @@ function App() {
                 <div
                   // type='button'
                   className='rounded-lg z-10 cursor-pointer'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMusicSetting(false);
-                  }}
+                  onClick={handleMusicSettingHide}
                 >
                   X
                 </div>
@@ -392,7 +499,7 @@ function App() {
           {showOpacitySlider && (
             <>
               <div>
-                <Slider horizontal min={30} value={opacityValue} onChange={(value) => setOpacityValue(value)} />
+                <Slider horizontal min={30} value={opacityValue} onChange={handleOpacityChange} />
               </div>
               <div className='flex gap-1 text-center items-center'>
                 <p>Text line</p>
@@ -401,11 +508,7 @@ function App() {
                   size="small"
                   checkedChildren="on"
                   unCheckedChildren="off"
-                  onChange={(e) => {
-                    console.log(e)
-                    toggleTextline(e);
-                    setTextLine(e)
-                  }}
+                  onChange={handleTextLineChange}
                 />
               </div>
             </>

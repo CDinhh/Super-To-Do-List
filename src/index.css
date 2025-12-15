@@ -181,6 +181,16 @@
         background: rgba(214, 138, 138, 0.8) !important;
 }
 
+.ant-slider-track{
+        background: rgba(214, 138, 138, 0.8) !important;
+}
+
+.ant-slider .ant-slider-handle::after  {
+        box-shadow:0 0 0 2px #d68a8a !important;
+
+
+}
+
 /* Responsive styles */
 @media (max-width: 1280px) {
     .bg-img {

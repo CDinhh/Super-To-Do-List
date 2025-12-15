@@ -1,13 +1,15 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { act } from "react";
+
+
+
 
 const todoSlice = createSlice({
     name: 'todoList',
-    initialState: [
-        { id: 1, text: 'Save the city', completed: true },
-    ], reducers: {
+    initialState:
+        []
+    , reducers: {
         addMission: (state, action) => {
-            state.push(action.payload)
+            state.push(action.payload);
         },
         deleteMission: (state, action) => {
             return state.filter(mission => mission.id !== action.payload);
