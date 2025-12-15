@@ -187,9 +187,16 @@
 
 .ant-slider .ant-slider-handle::after  {
         box-shadow:0 0 0 2px #d68a8a !important;
-
-
 }
+
+
+
+/* .anticon svg {
+  color: white;
+  filter: drop-shadow(0 0 1.2px black);
+} */
+
+
 
 /* Responsive styles */
 @media (max-width: 1280px) {

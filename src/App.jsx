@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { DatePicker, Divider, message, Slider, Switch } from 'antd';
-import { ClockCircleOutlined, DashboardOutlined, DeleteOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { DatePicker, Divider, message, Slider, Switch, Tooltip } from 'antd';
+import { ClockCircleFilled, ClockCircleOutlined, ClockCircleTwoTone, DashboardFilled, DashboardOutlined, DashboardTwoTone, DeleteFilled, DeleteOutlined, DeleteTwoTone, MinusCircleFilled, MinusCircleOutlined, MinusCircleTwoTone } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
@@ -29,6 +29,8 @@ function App() {
   const [showOpacitySlider, setShowOpacitySlider] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [targetMissionId, setTargetMissionId] = useState('');
+  const [hideMusicSection, setHideMusicSecion] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
 
 
 
@@ -117,7 +119,12 @@ function App() {
 
 
   const disabledTime = useCallback(() => {
+    if (!selectedDate) return;
     const now = dayjs();
+
+    // Chỉ disable time nếu chọn ngày hôm nay
+    if (!selectedDate.isSame(now, "day")) return;
+
     const currentHour = now.hour();
     const currentMinute = now.minute() + 1;
 
@@ -137,7 +144,7 @@ function App() {
         return Array.from({ length: 60 }, (_, i) => i).filter(s => s !== 0);
       },
     };
-  }, []);
+  }, [selectedDate]);
 
   const disabledDate = useCallback((current) => {
     // Disable tất cả ngày trước hôm nay
@@ -305,37 +312,49 @@ function App() {
                   <div >
                     {
                       task.countDown && !task.completed && (
-                        <button
-                          onClick={() => removeCountDown(task.id)
-                          }
-                          className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
-                          title='Remove count down'
-                        >
-                          <MinusCircleOutlined />
-                        </button>
+                        <Tooltip title='Remove deadline'>
+                          <button
+                            onClick={() => removeCountDown(task.id)
+                            }
+                            className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
+
+                          >
+                            <MinusCircleOutlined
+                              style={{ color: 'gray' }}
+                            />
+                          </button>
+                        </Tooltip>
                       )
                     }
                     {
                       task.countDown == null && !task.completed && (
-                        <button
-                          onClick={() => {
-                            setTargetMissionId(task.id);
-                            setShowTimePicker(!showTimePicker);
-                          }}
-                          className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
+                        <Tooltip title='Set deadline'>
+                          <button
+                            onClick={() => {
+                              setTargetMissionId(task.id);
+                              setShowTimePicker(!showTimePicker);
+                            }}
+                            className="mr-2 px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer"
 
-                        >
-                          <DashboardOutlined title='Count down this one' />
-                        </button>
+                          >
+                            <DashboardOutlined
+                              twoToneColor="#ff7ab8b3"
+                            />
+                          </button>
+                        </Tooltip>
                       )
                     }
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      className=" px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer "
+                    <Tooltip title='Delete this one' >
+                      <button
+                        onClick={() => deleteTask(task.id)}
+                        className=" px-4 py-2 bg-white/30 hover:bg-white/40 text-white rounded-lg transition-all hover:cursor-pointer "
 
-                    >
-                      <DeleteOutlined />
-                    </button>
+                      >
+                        <DeleteOutlined
+                          twoToneColor="#ff7ab8b3"
+                        />
+                      </button>
+                    </Tooltip>
                   </div>
                   {/* Button div of the middle of setting block*/}
 
@@ -343,11 +362,19 @@ function App() {
                   {showTimePicker && (targetMissionId === task.id) && (
                     <div className='mt-2'>
                       <DatePicker
+                        defaultValue={dayjs()}
                         open={showTimePicker}
+                        onOpenChange={(open) => {
+                          setShowTimePicker(open);
+                        }}
                         showTime={{ format: "HH:mm ", showSecond: false }}
                         format="YYYY-MM-DD HH:mm"
                         disabledDate={disabledDate}
                         disabledTime={disabledTime}
+                        onCalendarChange={(date) => {
+                          console.log(date);
+                          setSelectedDate(date)
+                        }}
                         onChange={(timeString) => {
                           updateCountDown(task.id, timeString.format('YYYY-MM-DD HH:mm:ss'));
                           setShowTimePicker(false);
@@ -387,24 +414,29 @@ function App() {
         {/* Mission block */}
 
 
-        <div className='absolute right-10 top-10 glass-border text-white p-4 hover:cursor-pointer select-none z-30 max-[900px]:hidden'
-          onClick={toggleBg}
-          title='Maybe flick because of high res image :D'
-        >
-          Change Background
-        </div>
+        <Tooltip title='Maybe flick because of high res image :D'>
+          <div className='absolute right-10 top-10 glass-border text-white p-4 hover:cursor-pointer select-none z-30 max-[900px]:hidden'
+            onClick={toggleBg}
 
-        <div className={`  absolute right-10 bottom-10 max-[1280px]:static max-[1280px]:mx-auto max-[1280px]:mt-4 max-[1280px]:mb-6 max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:p-2 glass-border text-white p-4 select-none  ${showMusicSetting ? '' : 'hover:cursor-pointer'}`}
+          >
+            Change Background
+          </div>
+        </Tooltip>
+
+        <div className={`  absolute right-10 bottom-10 max-[1280px]:static max-[1280px]:mx-auto max-[1280px]:mt-4 max-[1280px]:mb-6 max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:p-2 glass-border text-white p-4 select-none  ${showMusicSetting ? '' : 'cursor-pointer'} ${hideMusicSection ? 'cursor-pointer' : ''}`}
           onClick={() => {
-            setShowMusicSetting(true);
-            localStorage.setItem('show-music-secsion', JSON.stringify(true));
+            if (hideMusicSection === true) setHideMusicSecion(false)
+            else {
+              setShowMusicSetting(true);
+              localStorage.setItem('show-music-secsion', JSON.stringify(true));
+            }
           }}
         >
           Music section
           {showMusicSetting && (
             <>
               <iframe
-                className='2xl:w-[20vw] 2xl:h-[30vh]  mt-1 mx-auto '
+                className={`2xl:w-[20vw] 2xl:h-[30vh]  mt-1 mx-auto ${hideMusicSection ? 'hidden' : ''}`}
                 allow="autoplay; encrypted-media"
                 allowFullScreen
                 loading="lazy"
@@ -415,7 +447,7 @@ function App() {
               {currentPlatForm === 'SoundCloud' && (
                 <p className='text-center mt-2 text-sm max-[768px]:text-xs px-2 wrap-break-word'>SoundCloud server is error bro, choose youtube</p>
               )}
-              <div className='absolute top-3 right-5 flex flex-nowrap'>
+              <div className={`absolute top-3 right-5 flex flex-nowrap ${hideMusicSection ? 'hidden' : ''}`}>
                 <select name="chooseSinger" id="music" className='mr-5 border rounded text-center' onChange={(e) => {
                   const selectedOption = e.target.options[e.target.selectedIndex];
                   const platform = selectedOption.parentElement.label;
@@ -441,29 +473,45 @@ function App() {
                   })
                   }
                 </select>
-                <div
-                  // type='button'
-                  className='rounded-lg z-10 cursor-pointer'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMusicSetting(false);
-                    localStorage.setItem('show-music-secsion', JSON.stringify(false));
-                  }}
-                >
-                  X
-                </div>
+                <Tooltip title="Hide this section">
+                  <span
+                    className={`mr-5 rounded-lg z-10 cursor-pointer`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setHideMusicSecion(true);
+                      // localStorage.setItem('show-music-secsion', JSON.stringify(false));
+                    }}
+                  >
+                    -
+                  </span>
+                </Tooltip>
+                <Tooltip title="Close this section">
+                  <span
+                    className={`rounded-lg z-10 cursor-pointer `}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMusicSetting(false);
+                      localStorage.setItem('show-music-secsion', JSON.stringify(false));
+                    }}
+                  >
+                    X
+                  </span>
+                </Tooltip>
               </div>
             </>
           )}
         </div>
 
         {/* Clock At Left Conner */}
-        <div
-          className='absolute left-10 top-10 glass-border text-white p-4 hover:cursor-not-allowed select-none text-3xl max-[900px]:hidden'
-          title='Time doesnt comeback but we can comeback to they:)'>
-          <ClockCircleOutlined />
-          {' ' + clock}
-        </div>
+        <Tooltip title="Time doesnt comeback but we can comeback to they:)">
+          <div
+            className='absolute left-10 top-10 glass-border text-white p-4 hover:cursor-not-allowed select-none text-3xl max-[900px]:hidden'>
+            <ClockCircleFilled
+            />
+            {' ' + clock}
+          </div>
+        </Tooltip>
+
 
         {/* Slider at the right conner */}
         <div className="absolute top-30 right-10 glass-border text-white  p-4 max-[900px]:hidden">
@@ -472,7 +520,7 @@ function App() {
           {showOpacitySlider && (
             <>
               <div>
-                <Slider horizontal min={30} value={opacityValue} onChange={(value) => {
+                <Slider horizontal min={0} value={opacityValue} onChange={(value) => {
                   setOpacityValue(value);
                   localStorage.setItem('opacity-value', JSON.stringify(value))
                 }} />
