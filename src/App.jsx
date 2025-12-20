@@ -13,12 +13,12 @@ const musicPlaylist = {
     LofiGirl: 'https://www.youtube.com/embed/jfKfPfyJRdk?si=CXMeMhRLkyVskqBi',
   },
   SoundCloud: {
-    MTP: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/1925530323&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=false',
-    MCK: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1660571346&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=false',
-    Obito: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A2009224335&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
-    Tlinh: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1685845422&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
-    Wrxdie: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1786869444&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
-    HTH: 'https://soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1902528475&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
+    MTP: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1823574432&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false&visual=false',
+    MCK: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1383951169&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false&visual=false',
+    Obito: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A2009224335&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false&visual=false',
+    Tlinh: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1685845422&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
+    Wrxdie: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1786869444&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
+    HTH: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1932591619&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false',
   },
 };
 
@@ -527,7 +527,7 @@ function App() {
           {showMusicSetting && (
             <>
               <iframe
-                className={`2xl:w-[20vw] 2xl:h-[30vh]  mt-1 mx-auto ${hideMusicSection ? 'hidden' : ''}`}
+                className={`  mt-1 mx-auto ${hideMusicSection ? 'hidden' : ''} ${currentPlatForm === 'SoundCloud' ? 'h-[50vh]' : 'h-[30vh]'}`}
                 allow="autoplay; encrypted-media"
                 allowFullScreen
                 loading="lazy"
@@ -535,8 +535,8 @@ function App() {
 
                 src={currentPlaylist}
               ></iframe>
-              {currentPlatForm === 'SoundCloud' && (
-                <p className='text-center mt-2 text-sm max-[768px]:text-xs px-2 wrap-break-word'>SoundCloud server is error bro, choose youtube</p>
+              {currentPlatForm === 'SoundCloud' && !hideMusicSection && (
+                <p className='text-center mt-2 text-sm max-[768px]:text-xs px-2 wrap-break-word'>SoundCloud could be error</p>
               )}
               <div className={`absolute top-3 right-5 flex flex-nowrap ${hideMusicSection ? 'hidden' : ''}`}>
                 <select name="chooseSinger" id="music" className='mr-5 border rounded text-center' onChange={(e) => {
