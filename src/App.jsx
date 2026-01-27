@@ -34,6 +34,15 @@ function App() {
   const [selectedDate, setSelectedDate] = useState('');
   const [filter, setFilter] = useState('all');
   const [showFilterButton, setShowFilterButton] = useState(false);
+  const [showBgSelector, setShowBgSelector] = useState(false);
+  const [currentBgImage, setCurrentBgImage] = useState(() => {
+    const bgDiv = document.querySelector('.bg-img');
+    if (bgDiv) {
+      const bgImage = window.getComputedStyle(bgDiv).backgroundImage.match(/\d+/g);
+      return bgImage ? Number.parseInt(bgImage[bgImage.length - 1]) : 1;
+    }
+    return 1;
+  });
 
 
 
@@ -154,13 +163,9 @@ function App() {
     return current && current < dayjs().startOf('day');
   }, []);
 
-  const toggleBg = useCallback(() => {
+  const changeBg = useCallback((number) => {
     const bgDiv = document.querySelector('.bg-img');
     const overlay = document.querySelector('.bg-overlay');
-    const bgImage = window.getComputedStyle(bgDiv).backgroundImage.match(/\d+/g);
-    let number = Number.parseInt(bgImage[bgImage.length - 1]);
-    if (number === 6) number = 1;
-    else number += 1;
 
     // Fade to black
     overlay.style.opacity = '1';
@@ -173,6 +178,7 @@ function App() {
       // Đợi fade to black hoàn tất
       setTimeout(() => {
         bgDiv.style.backgroundImage = `url('/${number}.jpg')`;
+        setCurrentBgImage(number);
         // Đợi một chút để đảm bảo browser đã render xong
         setTimeout(() => {
           overlay.style.opacity = '0';
@@ -503,14 +509,94 @@ function App() {
         {/* Mission block */}
 
 
-        <Tooltip title='Maybe flick because of high res image :D'>
-          <div className='hover:scale-110 animate-slide-right ease-in duration-300 absolute right-10 top-10 glass-border text-white p-4 hover:cursor-pointer select-none z-30 max-[900px]:hidden'
-            onClick={toggleBg}
+        {/* Right side controls container - transparent wrapper */}
+        <div className='animate-slide-right absolute right-10 top-10 flex flex-col items-end gap-4 max-[900px]:hidden z-30'>
 
-          >
-            <h1 className='animate-bounce-in '>Change Background</h1>
+          {/* Change Background Section */}
+          <div className={`${showBgSelector ? '' : 'hover:scale-110'} glass-border text-white p-4 select-none transition-all`}>
+            <div className='flex justify-between items-center'>
+              <Tooltip title={showBgSelector ? '' : 'Choose your favorite background'}>
+                <h1
+                  onClick={() => setShowBgSelector(true)}
+                  className={`${showBgSelector ? '' : 'cursor-pointer'} animate-bounce-in`}
+                >
+                  Change Background
+                </h1>
+              </Tooltip>
+              {showBgSelector && (
+                <Tooltip title="Close this section">
+                  <span
+                    className='ml-4 cursor-pointer'
+                    onClick={() => setShowBgSelector(false)}
+                  >
+                    X
+                  </span>
+                </Tooltip>
+              )}
+            </div>
+            {showBgSelector && (
+              <div className='grid grid-cols-3 gap-2 mt-3'>
+                {[1, 2, 3, 4, 5, 6].map(num => (
+                  <Tooltip key={num} title={`Background ${num}`}>
+                    <div
+                      onClick={() => changeBg(num)}
+                      className={`relative w-20 h-20 rounded-lg cursor-pointer overflow-hidden border-2 transition-all hover:scale-105 ${currentBgImage === num ? 'border-pink-500 ring-2 ring-pink-500' : 'border-white/30 hover:border-white/60'
+                        }`}
+                    >
+                      <img
+                        src={`/${num}.jpg`}
+                        alt={`Background ${num}`}
+                        className='w-full h-full object-cover'
+                      />
+                      {currentBgImage === num && (
+                        <div className='absolute inset-0 bg-pink-500/20 flex items-center justify-center'>
+                          <span className='text-white text-2xl font-bold'>✓</span>
+                        </div>
+                      )}
+                    </div>
+                  </Tooltip>
+                ))}
+              </div>
+            )}
           </div>
-        </Tooltip>
+
+          {/* Glass Opacity Section */}
+          <div className={`${showOpacitySlider ? '' : 'hover:scale-110'} glass-border text-white p-4 transition-all w-fit`}>
+            <div className='flex'>
+              <Tooltip title={showOpacitySlider ? '' : "made something naked"}>
+                <h1 onClick={() => setShowOpacitySlider(true)} className={`${showOpacitySlider ? 'mr-4' : 'cursor-pointer'} animate-bounce-in`}>Glass opacity</h1>
+              </Tooltip>
+              <Tooltip title="Close this section">
+                <span onClick={() => setShowOpacitySlider(false)} className={`${showOpacitySlider ? 'cursor-pointer' : 'hidden'}`} >X</span>
+              </Tooltip>
+            </div>
+            {showOpacitySlider && (
+              <>
+                <div>
+                  <Slider horizontal min={0} value={opacityValue} onChange={(value) => {
+                    setOpacityValue(value);
+                    localStorage.setItem('opacity-value', JSON.stringify(value))
+                  }} />
+                </div>
+                <div className='flex gap-1 text-center items-center'>
+                  <p>Text line</p>
+                  <Switch
+                    checked={textLine}
+                    size="small"
+                    checkedChildren="on"
+                    unCheckedChildren="off"
+                    onChange={(e) => {
+                      // toggleTextline(e);
+                      setTextLine(e);
+                      localStorage.setItem('show-text-line', JSON.stringify(e));
+                    }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+        </div>
 
         <div className={` animate-slide-up absolute right-10 bottom-10 max-[1280px]:static max-[1280px]:mx-auto max-[1280px]:mt-4 max-[1280px]:mb-6 max-[1280px]:w-[50vw] max-[1024px]:w-[50vw] max-[768px]:w-[95vw] max-[768px]:p-2 glass-border text-white p-4 select-none  ${showMusicSetting ? '' : 'cursor-pointer'} ${hideMusicSection ? 'cursor-pointer' : ''}`}
           onClick={() => {
@@ -603,45 +689,6 @@ function App() {
             <h1 className='animate-bounce-in ml-2'>{clock}</h1>
           </div>
         </Tooltip>
-
-
-        {/* Slider at the right conner */}
-
-        <div className={` ${showOpacitySlider ? '' : 'hover:scale-110'} animate-slide-right absolute top-30 right-10 glass-border text-white  p-4 max-[900px]:hidden`}>
-          <div className='flex'>
-            <Tooltip title={showOpacitySlider ? '' : "made something naked"}>
-              <h1 onClick={() => setShowOpacitySlider(true)} className={`${showOpacitySlider ? 'mr-4' : 'cursor-pointer'} animate-bounce-in`}>Glass opacity</h1>
-            </Tooltip>
-            <Tooltip title="Close this section">
-              <span onClick={() => setShowOpacitySlider(false)} className={`${showOpacitySlider ? 'cursor-pointer' : 'hidden'}`} >X</span>
-            </Tooltip>
-
-          </div>
-          {showOpacitySlider && (
-            <>
-              <div>
-                <Slider horizontal min={0} value={opacityValue} onChange={(value) => {
-                  setOpacityValue(value);
-                  localStorage.setItem('opacity-value', JSON.stringify(value))
-                }} />
-              </div>
-              <div className='flex gap-1 text-center items-center'>
-                <p>Text line</p>
-                <Switch
-                  checked={textLine}
-                  size="small"
-                  checkedChildren="on"
-                  unCheckedChildren="off"
-                  onChange={(e) => {
-                    // toggleTextline(e);
-                    setTextLine(e);
-                    localStorage.setItem('show-text-line', JSON.stringify(e));
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </div>
         <Tooltip title="Open my repo">
           <div className=' absolute md:left-3 md:bottom-3 max-md:top-0 max-md:right-0 z-50'>
             <button className='bg-[#d68a8a] size-7 border-0 rounded-full hover:cursor-pointer'
