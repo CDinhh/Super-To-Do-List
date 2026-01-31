@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Cause:wght@100..900&display=swap');
 @import "tailwindcss";
 
+* {
+    font-family: 'Cause', sans-serif;
+}
+
 
 :root {
     --glass-blur: 10rem;
