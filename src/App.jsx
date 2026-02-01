@@ -11,6 +11,8 @@ const musicPlaylist = {
     Noel: 'https://www.youtube.com/embed/M1WtAPZJSlY?si=BWOJYoUUWS9t6WOB',
     Windy: 'https://www.youtube.com/embed/ttEEpPrIzkU?si=vEJ31OUwSEPXrYxl',
     LofiGirl: 'https://www.youtube.com/embed/jfKfPfyJRdk?si=CXMeMhRLkyVskqBi',
+    "Cry For Me": 'https://www.youtube.com/embed/72hp9Bqfpz4?si=CQAao3Q31pqq6LTC',
+    "Cry After Sẽ": 'https://www.youtube.com/embed/AmXdpVnJwt8?si=iYNuo7c1uUUxmcwG',
   },
   SoundCloud: {
     MTP: 'https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/soundcloud%253Aplaylists%253A1823574432&color=%23d68a8a&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false&visual=false',
